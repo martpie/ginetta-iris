@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="72px" height="122px" viewBox="0 0 72 122" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
+    <title>Icon</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Icon" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M36,122 C55.9774648,122 72,105.774648 72,86 L0,86 C0,105.774648 16.1239437,122 36,122 Z" id="lower" fill="#16161D" fill-rule="nonzero"></path>
+        <circle id="upper" fill="#16161D" fill-rule="nonzero" cx="36" cy="36" r="36"></circle>
+    </g>
+</svg>
