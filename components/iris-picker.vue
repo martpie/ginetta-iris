@@ -116,6 +116,7 @@ let initialCoordinates = {
 };
 
 let iris;
+let irisCanvas;
 let icon;
 
 export default {
@@ -145,102 +146,13 @@ export default {
     icon = new Image();
 
     // Pre-render Iris in a canvas
-    const irisCanvas = document.createElement('canvas');
+    irisCanvas = document.createElement('canvas');
 
     const canvas = this.$refs.mainFrame;
     const context = canvas.getContext('2d');
     const d3canvas = d3.select(canvas);
 
-    window.addEventListener('resize', refresh, { passive: true });
-
-    function zoomed() {
-      context.save();
-      drawBackground();
-
-      context.translate(d3.event.transform.x, d3.event.transform.y);
-      context.scale(d3.event.transform.k, d3.event.transform.k);
-      drawIris();
-      context.restore();
-
-      drawSelection();
-      drawIcon();
-    }
-
-    function refresh() {
-      _self.refreshFrameDimensions();
-      window.requestAnimationFrame(() => {
-        drawBackground();
-        drawIris();
-        drawSelection();
-        drawIcon();
-      });
-    }
-
-    function drawIris() {
-      let destinationWidth = 400;
-      let destinationHeight = 400;
-
-      // We want to smart-draw the image into the canvas. It means we have to
-      // check the canvas aspect ratio to see if the destination rectangle
-      // coordinate will be in proportion of the width or the height.
-      if (canvas.width < canvas.height) {
-        const ratio = canvas.width / canvas.height;
-        destinationHeight = canvas.height * ratio; // Keep the Iris proportion
-        destinationWidth = canvas.height / (canvas.height / canvas.width)
-      } else {
-        const ratio = canvas.height / canvas.width;
-        destinationWidth = canvas.width * ratio; // Keep the Iris proportion
-        destinationHeight = canvas.width / (canvas.width / canvas.height)
-      }
-
-      // Let's rescale the big image to make it fit our canvas
-      context.drawImage(
-        irisCanvas,
-        0, // TODO center it
-        0,
-        destinationWidth,
-        destinationHeight
-      );
-    }
-
-    function drawBackground() {
-      context.fillStyle = 'black';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function drawSelection() {
-      const aspectRatio = this.options.aspectRatio;
-      const selectionWidth = 600;
-      const selectionHeight = 400;
-      const x = Math.round((canvas.width - selectionWidth) / 2); // TODO check if rounding affect things badly
-      const y = Math.round((canvas.height - selectionHeight) / 2);
-
-      context.strokeStyle = 'rgb(255, 255, 255, 255)';
-      context.strokeRect(x, y, selectionWidth, selectionHeight);
-
-      // Build the rectangle to focus on the center of the image
-      context.fillStyle = 'rgba(255, 255, 255, .3)'
-      context.fillRect(0, 0, x + selectionWidth, y);
-      context.fillRect(0, y, x, y + selectionHeight);
-      context.fillRect(x, y + selectionHeight, canvas.width, canvas.height);
-      context.fillRect(x + selectionWidth, 0, x + selectionWidth, y + selectionHeight);
-    }
-
-    function drawIcon() {
-      const iconWidth = 100;
-      const iconHeight = 100;
-      const x = Math.round((canvas.width - iconWidth) / 2);
-      const y = Math.round((canvas.height - iconHeight) / 2);
-
-      // TODO CHECK LOGO PROPORTIONS (like drawIris())
-      context.drawImage(
-        icon,
-        x,
-        y,
-        iconWidth,
-        iconHeight
-      )
-    }
+    window.addEventListener('resize', this.refresh, { passive: true });
 
     iris.onload = () => {
       // Using a canvas to draw the iris in the main frame boosts perforamces in Chrome
@@ -253,10 +165,9 @@ export default {
       setTimeout(() => {
         d3canvas.call(d3.zoom()
           .scaleExtent([MIN_SCALE, MAX_SCALE])
-          .on("zoom", zoomed));
+          .on("zoom", this.zoomed));
 
-        refresh();
-
+        this.refresh();
         this.loaded = true;
       }, 0);
     };
@@ -287,8 +198,108 @@ export default {
       canvas.toBlob((blob) => {
         FileSaver.saveAs(blob, 'iris-snap.png');
       });
+    },
+    /**
+     * Canvas drawing functions
+     */
+    zoomed() {
+      const context = this.$refs.mainFrame.getContext('2d');
+      this.drawBackground();
+
+      context.save();
+      context.translate(d3.event.transform.x, d3.event.transform.y);
+      context.scale(d3.event.transform.k, d3.event.transform.k);
+      this.drawIris();
+      context.restore();
+
+      this.drawSelection();
+      this.drawIcon();
+    },
+    drawBackground() {
+      const canvas = this.$refs.mainFrame;
+      const context = canvas.getContext('2d');
+
+      context.fillStyle = 'black';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    },
+    drawIcon() {
+      const canvas = this.$refs.mainFrame;
+      const context = canvas.getContext('2d');
+
+      const destWidth = icon.width; // TODO
+      const destHeight = icon.height;
+      const x = Math.round((canvas.width - destWidth) / 2);
+      const y = Math.round((canvas.height - destHeight) / 2);
+
+      // TODO CHECK LOGO PROPORTIONS (like drawIris())
+      context.drawImage(
+        icon,
+        x,
+        y,
+        destWidth,
+        destHeight
+      )
+    },
+    drawIris() {
+      const canvas = this.$refs.mainFrame;
+      const context = canvas.getContext('2d');
+
+      let destinationWidth = null;
+      let destinationHeight = null;
+
+      // We want to smart-draw the image into the canvas. It means we have to
+      // check the canvas aspect ratio to see if the destination rectangle
+      // coordinate will be in proportion of the width or the height.
+      if (canvas.width < canvas.height) {
+        const ratio = canvas.width / canvas.height;
+        destinationHeight = canvas.height * ratio; // Keep the Iris proportion
+        destinationWidth = canvas.height / (canvas.height / canvas.width)
+      } else {
+        const ratio = canvas.height / canvas.width;
+        destinationWidth = canvas.width * ratio; // Keep the Iris proportion
+        destinationHeight = canvas.width / (canvas.width / canvas.height)
+      }
+
+      // Let's rescale the big image to make it fit our canvas
+      context.drawImage(
+        irisCanvas,
+        0, // TODO center it
+        0,
+        destinationWidth,
+        destinationHeight
+      );
+    },
+    drawSelection() {
+      const canvas = this.$refs.mainFrame;
+      const context = canvas.getContext('2d');
+
+      const aspectRatio = this.options.aspectRatio;
+      const selectionWidth = 600;
+      const selectionHeight = 400;
+      const x = Math.round((canvas.width - selectionWidth) / 2); // TODO check if rounding affect things badly
+      const y = Math.round((canvas.height - selectionHeight) / 2);
+
+      context.strokeStyle = 'rgb(255, 255, 255, 255)';
+      context.strokeRect(x, y, selectionWidth, selectionHeight);
+
+      // Build the rectangle to focus on the center of the image
+      context.fillStyle = 'rgba(255, 255, 255, .3)'
+      context.fillRect(0, 0, x + selectionWidth, y);
+      context.fillRect(0, y, x, y + selectionHeight);
+      context.fillRect(x, y + selectionHeight, canvas.width, canvas.height);
+      context.fillRect(x + selectionWidth, 0, x + selectionWidth, y + selectionHeight);
+    },
+    refresh() {
+      this.refreshFrameDimensions();
+
+      window.requestAnimationFrame(() => {
+        this.drawBackground();
+        this.drawIris();
+        this.drawSelection();
+        this.drawIcon();
+      });
     }
-  }
+  },
 }
 </script>
 
