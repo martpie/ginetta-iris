@@ -38,7 +38,23 @@
           </label>
         </div>
         <div class="form-control">
-          <button @click="snap">Snap!</button>
+          <label for="iris-form-portraitmode">
+            <input
+              id="iris-form-portraitmode"
+              v-model="options.portraitMode"
+              class="checkbox-control"
+              type="checkbox"
+            >
+            Portrait mode
+          </label>
+        </div>
+        <div class="form-control">
+          <button
+            class="snap"
+            @click="snap"
+          >
+            Snap!
+          </button>
         </div>
       </div>
       <div class="iris__toolbar__about">
@@ -128,6 +144,9 @@ export default {
     iris = new Image();
     icon = new Image();
 
+    // Pre-render Iris in a canvas
+    const irisCanvas = document.createElement('canvas');
+
     const canvas = this.$refs.mainFrame;
     const context = canvas.getContext('2d');
     const d3canvas = d3.select(canvas);
@@ -136,12 +155,13 @@ export default {
 
     function zoomed() {
       context.save();
-      context.clearRect(0, 0, canvas.width, canvas.height);
       drawBackground();
+
       context.translate(d3.event.transform.x, d3.event.transform.y);
       context.scale(d3.event.transform.k, d3.event.transform.k);
       drawIris();
       context.restore();
+
       drawSelection();
       drawIcon();
     }
@@ -149,12 +169,10 @@ export default {
     function refresh() {
       _self.refreshFrameDimensions();
       window.requestAnimationFrame(() => {
-        context.save();
         drawBackground();
         drawIris();
         drawSelection();
         drawIcon();
-        context.restore();
       });
     }
 
@@ -177,7 +195,7 @@ export default {
 
       // Let's rescale the big image to make it fit our canvas
       context.drawImage(
-        iris,
+        irisCanvas,
         0, // TODO center it
         0,
         destinationWidth,
@@ -191,6 +209,7 @@ export default {
     }
 
     function drawSelection() {
+      const aspectRatio = this.options.aspectRatio;
       const selectionWidth = 600;
       const selectionHeight = 400;
       const x = Math.round((canvas.width - selectionWidth) / 2); // TODO check if rounding affect things badly
@@ -224,8 +243,11 @@ export default {
     }
 
     iris.onload = () => {
-      // const { width, height } = getCanvasMaxDimensions(iris.width, iris.height);
-      refresh();
+      // Using a canvas to draw the iris in the main frame boosts perforamces in Chrome
+      const { width: irisCanvasWidth, height: irisCanvasHeight } = getCanvasMaxDimensions(iris.width, iris.height);
+      irisCanvas.width = irisCanvasWidth;
+      irisCanvas.height = irisCanvasHeight;
+      irisCanvas.getContext('2d').drawImage(iris, 0, 0, irisCanvas.width, irisCanvas.width);
 
       // Looks like reactivity is not instantaneous
       setTimeout(() => {
@@ -233,10 +255,7 @@ export default {
           .scaleExtent([MIN_SCALE, MAX_SCALE])
           .on("zoom", zoomed));
 
-        drawBackground();
-        drawIris();
-        drawSelection();
-        drawIcon();
+        refresh();
 
         this.loaded = true;
       }, 0);
@@ -351,5 +370,9 @@ export default {
     color: #bbb;
     text-align: center;
   }
+}
+
+.snap {
+  width: 100%;
 }
 </style>
