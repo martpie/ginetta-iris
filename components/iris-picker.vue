@@ -8,8 +8,9 @@
           </label>
           <select
             id="iris-form-preset"
+            v-model="options.aspectRatio"
             class="input-control"
-            @input="changePreset"
+            @input="refresh"
           >
             <option value="16:9">Slide / Wallpaper</option>
             <option value="1.545:1">Business card (Europe)</option>
@@ -24,18 +25,8 @@
             v-model="options.aspectRatio"
             class="input-control"
             type="text"
+            @input="refresh"
           >
-        </div>
-        <div class="form-control">
-          <label for="iris-form-icon">
-            <input
-              id="iris-form-icon"
-              v-model="options.icon"
-              class="checkbox-control"
-              type="checkbox"
-            >
-            Include the little guy
-          </label>
         </div>
         <div class="form-control">
           <label for="iris-form-portraitmode">
@@ -46,6 +37,18 @@
               type="checkbox"
             >
             Portrait mode
+          </label>
+        </div>
+        <div class="form-control">
+          <label for="iris-form-icon">
+            <input
+              id="iris-form-icon"
+              v-model="options.icon"
+              class="checkbox-control"
+              type="checkbox"
+              @click="refresh"
+            >
+            Include the little guy
           </label>
         </div>
         <div class="form-control">
@@ -135,7 +138,8 @@ export default {
       },
       options: {
         aspectRatio: '16:9',
-        icon: false
+        icon: false,
+        portraitMode: false
       }
     }
   },
@@ -180,9 +184,6 @@ export default {
     iris.src = '/iris.png';
   },
   methods: {
-    changePreset(e) {
-      this.options.aspectRatio = e.currentTarget.value;
-    },
     refreshFrameDimensions() {
       const { offsetWidth, offsetHeight } = this.$refs.mainFrameContainer;
 
@@ -203,17 +204,29 @@ export default {
      * Canvas drawing functions
      */
     zoomed() {
+      this.frame.scale = d3.event.transform.k;
+      this.frame.translate.x = d3.event.transform.x;
+      this.frame.translate.y = d3.event.transform.y;
+
+      this.refresh();
+    },
+    refresh() {
       const context = this.$refs.mainFrame.getContext('2d');
-      this.drawBackground();
 
-      context.save();
-      context.translate(d3.event.transform.x, d3.event.transform.y);
-      context.scale(d3.event.transform.k, d3.event.transform.k);
-      this.drawIris();
-      context.restore();
+      this.refreshFrameDimensions();
 
-      this.drawSelection();
-      this.drawIcon();
+      window.requestAnimationFrame(() => {
+        this.drawBackground();
+
+        context.save();
+        context.translate(this.frame.translate.x, this.frame.translate.y); // important: do the translation before the scaline
+        context.scale(this.frame.scale, this.frame.scale);
+        this.drawIris();
+        context.restore();
+
+        this.drawSelection();
+        this.drawIcon();
+      });
     },
     drawBackground() {
       const canvas = this.$refs.mainFrame;
@@ -223,22 +236,24 @@ export default {
       context.fillRect(0, 0, canvas.width, canvas.height);
     },
     drawIcon() {
-      const canvas = this.$refs.mainFrame;
-      const context = canvas.getContext('2d');
+      if (this.options.icon) {
+        const canvas = this.$refs.mainFrame;
+        const context = canvas.getContext('2d');
 
-      const destWidth = icon.width; // TODO
-      const destHeight = icon.height;
-      const x = Math.round((canvas.width - destWidth) / 2);
-      const y = Math.round((canvas.height - destHeight) / 2);
+        const destWidth = icon.width;
+        const destHeight = icon.height;
+        const x = Math.round((canvas.width - destWidth) / 2);
+        const y = Math.round((canvas.height - destHeight) / 2);
 
-      // TODO CHECK LOGO PROPORTIONS (like drawIris())
-      context.drawImage(
-        icon,
-        x,
-        y,
-        destWidth,
-        destHeight
-      )
+        // TODO CHECK LOGO PROPORTIONS (like drawIris())
+        context.drawImage(
+          icon,
+          x,
+          y,
+          destWidth,
+          destHeight
+        )
+      }
     },
     drawIris() {
       const canvas = this.$refs.mainFrame;
@@ -273,9 +288,27 @@ export default {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
+      const base = Math.min(canvas.height, canvas.width) * 0.75; // Maximum width/height that should be used
       const aspectRatio = this.options.aspectRatio;
-      const selectionWidth = 600;
-      const selectionHeight = 400;
+
+      const [aspectRatioWidth, aspectRatioHeight] = aspectRatio.split(':');
+
+      if (!aspectRatioWidth || !aspectRatioHeight) return;
+
+      let selectionWidth = aspectRatioWidth;
+      let selectionHeight = aspectRatioHeight;
+
+      // Resize the Selection to something more user-friendly
+      // TODO should I check the aspect ratios instead?
+      if (this.frame.width > this.frame.height ) { // TODO sth wrong here, NEEDS REFACTORING
+      // if (this.frame.width / this.frame.height < aspectRatioWidth / aspectRatioHeight) {
+        selectionWidth = base;
+        selectionHeight = Math.round(aspectRatioHeight * base / aspectRatioWidth)
+      } else {
+        selectionWidth = Math.round(aspectRatioWidth * base / aspectRatioHeight);
+        selectionHeight = base;
+      }
+
       const x = Math.round((canvas.width - selectionWidth) / 2); // TODO check if rounding affect things badly
       const y = Math.round((canvas.height - selectionHeight) / 2);
 
@@ -283,21 +316,12 @@ export default {
       context.strokeRect(x, y, selectionWidth, selectionHeight);
 
       // Build the rectangle to focus on the center of the image
-      context.fillStyle = 'rgba(255, 255, 255, .3)'
+      context.fillStyle = 'rgba(0, 0, 0, .5)'
+      // context.fillStyle = 'rgba(255, 255, 255, .3)'
       context.fillRect(0, 0, x + selectionWidth, y);
       context.fillRect(0, y, x, y + selectionHeight);
       context.fillRect(x, y + selectionHeight, canvas.width, canvas.height);
       context.fillRect(x + selectionWidth, 0, x + selectionWidth, y + selectionHeight);
-    },
-    refresh() {
-      this.refreshFrameDimensions();
-
-      window.requestAnimationFrame(() => {
-        this.drawBackground();
-        this.drawIris();
-        this.drawSelection();
-        this.drawIcon();
-      });
     }
   },
 }
