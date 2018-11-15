@@ -324,24 +324,23 @@ export default {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
-      const base = Math.round(Math.min(canvas.height, canvas.width) * SELECTION_SCALE); // Maximum width/height that should be used
+      const base = Math.min(canvas.height, canvas.width) * SELECTION_SCALE; // Maximum width/height that should be used
 
       const [aspectRatioWidth, aspectRatioHeight] = this.getAspectRatio();
 
       if (!aspectRatioWidth || !aspectRatioHeight) return;
 
-      let selectionWidth = aspectRatioWidth;
-      let selectionHeight = aspectRatioHeight;
+      let selectionWidth;
+      let selectionHeight;
 
       // Resize the Selection to something more user-friendly
       // TODO should I check the aspect ratios instead?
-      if (this.frame.width > this.frame.height ) { // TODO sth wrong here, NEEDS REFACTORING
-      // if (this.frame.width / this.frame.height < aspectRatioWidth / aspectRatioHeight) {
-        selectionWidth = base;
-        selectionHeight = Math.round(aspectRatioHeight * base / aspectRatioWidth)
+      if (aspectRatioWidth > aspectRatioHeight) { // TODO sth wrong here, NEEDS REFACTORING
+        selectionWidth = Math.round(base);
+        selectionHeight = Math.round(base * (aspectRatioHeight / aspectRatioWidth));
       } else {
-        selectionWidth = Math.round(aspectRatioWidth * base / aspectRatioHeight);
-        selectionHeight = base;
+        selectionWidth = Math.round(base * (aspectRatioWidth / aspectRatioHeight))
+        selectionHeight = Math.round(base);
       }
 
       const x = Math.round((canvas.width - selectionWidth) / 2); // TODO check if rounding affect things badly
@@ -377,6 +376,10 @@ export default {
 
       if (aspectRatio.length !== 2) return [null, null];
       if (this.options.invertAspectRatio) aspectRatio = aspectRatio.reverse();
+
+      aspectRatio = aspectRatio.map(a => Number(a));
+
+      if (aspectRatio[0] === NaN || aspectRatio[1] === NaN) return [null, null];
 
       return aspectRatio;
     }
