@@ -204,16 +204,17 @@ export default {
     },
     snap() {
       const canvas = this.$refs.mainFrame;
+      const [aspectRatioWidth, aspectRatioHeight] = this.getAspectRatio();
 
       // Super candid and bad solution
       const snap = document.createElement('canvas');
-      snap.width = this.selection.width; // TODO dynamic, see that with a print person
-      snap.height = this.selection.height;
+      snap.width = 1920; // TODO should be dynamic (sometimes, height should be the base)
+      snap.height = snap.width * aspectRatioHeight / aspectRatioWidth;
 
       snap
         .getContext('2d')
         .drawImage(
-          this.$refs.mainFrame, // SNAP FROM THE IRIS SOURCE INSTEAD
+          this.$refs.mainFrame, // TODO SNAP FROM THE IRIS SOURCE INSTEAD
           this.selection.x,
           this.selection.y,
           this.selection.width,
@@ -247,7 +248,7 @@ export default {
         this.drawBackground();
 
         context.save();
-        context.translate(this.frame.translate.x, this.frame.translate.y); // important: do the translation before the scaline
+        context.translate(this.frame.translate.x, this.frame.translate.y); // important: do the translation before the scaling
         context.scale(this.frame.scale, this.frame.scale);
         this.drawIris();
         context.restore();
@@ -324,12 +325,8 @@ export default {
       const context = canvas.getContext('2d');
 
       const base = Math.round(Math.min(canvas.height, canvas.width) * SELECTION_SCALE); // Maximum width/height that should be used
-      let aspectRatio = this.options.aspectRatio.split(':');
 
-      if (aspectRatio.length !== 2) return;
-      if (this.options.invertAspectRatio) aspectRatio = aspectRatio.reverse();
-
-      const [aspectRatioWidth, aspectRatioHeight] = aspectRatio;
+      const [aspectRatioWidth, aspectRatioHeight] = this.getAspectRatio();
 
       if (!aspectRatioWidth || !aspectRatioHeight) return;
 
@@ -371,6 +368,17 @@ export default {
       context.fillRect(x + selectionWidth, 0, x + selectionWidth, y + selectionHeight);
 
       context.restore();
+    },
+    /**
+     * Some helpers
+     */
+    getAspectRatio() {
+      let aspectRatio = this.options.aspectRatio.split(':');
+
+      if (aspectRatio.length !== 2) return [null, null];
+      if (this.options.invertAspectRatio) aspectRatio = aspectRatio.reverse();
+
+      return aspectRatio;
     }
   },
 }
@@ -394,6 +402,7 @@ export default {
   z-index: 1;
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 
 .iris__frame {
@@ -452,8 +461,10 @@ export default {
   display: block;
   width: 100%;
   padding: 8px 12px;
-  border-radius: 3px;
+  border-radius: 2px;
   border: solid 1px rgba(0, 0, 0, .2);
+  -moz-appearance: none;
+  -webkit-appearance: none;
 }
 
 .iris__toolbar__about {
@@ -471,7 +482,7 @@ export default {
   display: block;
   width: 100%;
   padding: 8px 12px;
-  border-radius: 3px;
+  border-radius: 2px;
   border: solid 1px rgba(0, 0, 0, .2);
 
   background: #0099BB;

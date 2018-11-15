@@ -21,4 +21,9 @@ html {
   box-sizing: border-box;
   margin: 0;
 }
+
+a,
+a:visited {
+  color: #007799;
+}
 </style>
