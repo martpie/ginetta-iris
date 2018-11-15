@@ -1,6 +1,6 @@
 {
   "name": "ginetta-iris",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "The Iris",
   "author": "Pierre de la Martinière <pierre.de.la.martiniere@gmail.com>",
   "private": true,
@@ -15,7 +15,6 @@
   "dependencies": {
     "cross-env": "^5.2.0",
     "d3": "^5.7.0",
-    "d3-timer": "^1.0.9",
     "d3-zoom": "^1.7.3",
     "file-saver": "^2.0.0-rc.4",
     "nuxt": "^2.0.0"

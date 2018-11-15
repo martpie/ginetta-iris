@@ -53,7 +53,8 @@
         </div>
         <div class="form-control">
           <button
-            class="snap"
+            id="snap"
+            type="button"
             @click="snap"
           >
             Snap!
@@ -61,7 +62,7 @@
         </div>
       </div>
       <div class="iris__toolbar__about">
-        <div class="form-control">
+        <div class="form-control form-control--disabled">
           <label for="iris-form-aspectratio">
             Share your config
           </label>
@@ -73,7 +74,7 @@
           >
         </div>
         <div class="about">
-          <small>finished in a rush by <a href="https://martpie.io">this guy</a></small>
+          <small>"finished" in a rush by <a href="https://martpie.io">this guy</a></small>
         </div>
       </div>
     </div>
@@ -107,9 +108,10 @@ import FileSaver from 'file-saver';
 
 import { getCanvasMaxDimensions } from '../utils/canvas';
 
-const INITIAL_SCALE = 0.6;
+const INITIAL_SCALE = 0.8; // TODO
 const MAX_SCALE = 20;
 const MIN_SCALE = 0.25;
+const SELECTION_SCALE = 0.75;
 
 let isPointerDown = false;
 let animationFrame = 0;
@@ -135,6 +137,12 @@ export default {
           x: 0,
           y: 0
         }
+      },
+      selection: {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
       },
       options: {
         aspectRatio: '16:9',
@@ -196,8 +204,32 @@ export default {
     snap() {
       const canvas = this.$refs.mainFrame;
 
-      canvas.toBlob((blob) => {
-        FileSaver.saveAs(blob, 'iris-snap.png');
+      console.log('SNAP');
+
+      // Super candid and bad solution
+      const snap = document.createElement('canvas');
+      snap.width = this.selection.width; // TODO dynamic, see that with a print person
+      snap.height = this.selection.height;
+
+      console.log(this.selection.width, this.selection.height);
+
+      snap
+        .getContext('2d')
+        .drawImage(
+          this.$refs.mainFrame, // SNAP FROM THE IRIS INSTEAD
+          this.selection.x,
+          this.selection.y,
+          this.selection.width,
+          this.selection.height,
+          0,
+          0,
+          snap.width,
+          snap.height
+        );
+
+
+      snap.toBlob((blob) => {
+        FileSaver.saveAs(blob, 'iris-snap.jpg');
       });
     },
     /**
@@ -259,36 +291,38 @@ export default {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
-      let destinationWidth = null;
-      let destinationHeight = null;
+      const base = Math.round(Math.min(canvas.height, canvas.width) * INITIAL_SCALE);
+
+      let destinationWidth = irisCanvas.width;
+      let destinationHeight = irisCanvas.height;
 
       // We want to smart-draw the image into the canvas. It means we have to
       // check the canvas aspect ratio to see if the destination rectangle
       // coordinate will be in proportion of the width or the height.
-      if (canvas.width < canvas.height) {
-        const ratio = canvas.width / canvas.height;
-        destinationHeight = canvas.height * ratio; // Keep the Iris proportion
-        destinationWidth = canvas.height / (canvas.height / canvas.width)
+      if (irisCanvas.width > irisCanvas.height) {
+        destinationWidth = base;
+        destinationHeight = Math.round(irisCanvas.height * base / irisCanvas.width);
       } else {
-        const ratio = canvas.height / canvas.width;
-        destinationWidth = canvas.width * ratio; // Keep the Iris proportion
-        destinationHeight = canvas.width / (canvas.width / canvas.height)
+        destinationWidth = Math.round(irisCanvas.width * base / irisCanvas.height);
+        destinationHeight = base;
       }
 
       // Let's rescale the big image to make it fit our canvas
       context.drawImage(
         irisCanvas,
-        0, // TODO center it
-        0,
+        (canvas.width - destinationWidth) / 2,
+        (canvas.height - destinationHeight) / 2,
         destinationWidth,
         destinationHeight
       );
     },
     drawSelection() {
+      // A few things could be cached here, as long as the aspectRatio doesn't
+      // change, we should just use this.selection
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
-      const base = Math.min(canvas.height, canvas.width) * 0.75; // Maximum width/height that should be used
+      const base = Math.round(Math.min(canvas.height, canvas.width) * SELECTION_SCALE); // Maximum width/height that should be used
       const aspectRatio = this.options.aspectRatio;
 
       const [aspectRatioWidth, aspectRatioHeight] = aspectRatio.split(':');
@@ -312,6 +346,13 @@ export default {
       const x = Math.round((canvas.width - selectionWidth) / 2); // TODO check if rounding affect things badly
       const y = Math.round((canvas.height - selectionHeight) / 2);
 
+      // Let's save those values for when we'll snip things
+      this.selection.x = x;
+      this.selection.y = y;
+      this.selection.width = selectionWidth;
+      this.selection.height = selectionHeight;
+
+      // And draw it
       context.strokeStyle = 'rgb(255, 255, 255, 255)';
       context.strokeRect(x, y, selectionWidth, selectionHeight);
 
@@ -388,12 +429,23 @@ export default {
     margin-bottom: .5rem;
     display: block;
   }
+
+  &--disabled {
+    opacity: .25;
+    cursor: not-allowed;
+
+    > * {
+      pointer-events: none;
+    }
+  }
 }
 
 .input-control {
-  padding: 8px 12px;
   display: block;
   width: 100%;
+  padding: 8px 12px;
+  border-radius: 3px;
+  border: solid 1px rgba(0, 0, 0, .2);
 }
 
 .iris__toolbar__about {
@@ -407,7 +459,18 @@ export default {
   }
 }
 
-.snap {
+#snap {
+  display: block;
   width: 100%;
+  padding: 8px 12px;
+  border-radius: 3px;
+  border: solid 1px rgba(0, 0, 0, .2);
+
+  background: #0099BB;
+  color: white;
+
+  &:active {
+    background: #007799;
+  }
 }
 </style>
