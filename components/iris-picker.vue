@@ -260,9 +260,11 @@ export default {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
+      context.save();
       context.fillStyle = 'black';
       // context.fillStyle = 'rgb(22, 22, 29)';
       context.fillRect(0, 0, canvas.width, canvas.height);
+      context.restore();
     },
     drawIcon() {
       if (this.options.icon) {
@@ -274,14 +276,16 @@ export default {
         const x = Math.round((canvas.width - destWidth) / 2);
         const y = Math.round((canvas.height - destHeight) / 2);
 
-        // TODO CHECK LOGO PROPORTIONS (like drawIris())
+        context.save();
+        context.globalAlpha = 0.4;
         context.drawImage(
           icon,
           x,
           y,
           destWidth,
           destHeight
-        )
+        );
+        context.restore();
       }
     },
     drawIris() {
@@ -353,6 +357,8 @@ export default {
       this.selection.height = selectionHeight;
 
       // And draw it
+      context.save();
+
       context.strokeStyle = 'rgb(255, 255, 255, 255)';
       context.strokeRect(x, y, selectionWidth, selectionHeight);
 
@@ -363,6 +369,8 @@ export default {
       context.fillRect(0, y, x, y + selectionHeight);
       context.fillRect(x, y + selectionHeight, canvas.width, canvas.height);
       context.fillRect(x + selectionWidth, 0, x + selectionWidth, y + selectionHeight);
+
+      context.restore();
     }
   },
 }
