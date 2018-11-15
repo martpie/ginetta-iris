@@ -3,6 +3,10 @@ const pkg = require('./package')
 module.exports = {
   mode: 'universal',
 
+  router: {
+    base: process.env.NODE_ENV === 'production' ? '/stuff/ginetta-iris/' : '/'
+  },
+
   /*
   ** Headers of the page
   */
@@ -14,7 +18,7 @@ module.exports = {
       { hid: 'description', name: 'description', content: pkg.description }
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      // { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ]
   },
 

@@ -189,8 +189,8 @@ export default {
       console.error('Failed loading the iris');
     };
 
-    icon.src = '/icon.svg';
-    iris.src = '/iris.png';
+    icon.src = 'icon.svg';
+    iris.src = 'iris.png';
   },
   methods: {
     refreshFrameDimensions() {
@@ -261,6 +261,7 @@ export default {
       const context = canvas.getContext('2d');
 
       context.fillStyle = 'black';
+      // context.fillStyle = 'rgb(22, 22, 29)';
       context.fillRect(0, 0, canvas.width, canvas.height);
     },
     drawIcon() {
