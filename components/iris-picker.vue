@@ -29,14 +29,15 @@
           >
         </div>
         <div class="form-control">
-          <label for="iris-form-portraitmode">
+          <label for="iris-form-invertar">
             <input
-              id="iris-form-portraitmode"
-              v-model="options.portraitMode"
+              id="iris-form-invertar"
+              v-model="options.invertAspectRatio"
               class="checkbox-control"
               type="checkbox"
+              @input="refresh"
             >
-            Portrait mode
+            Invert aspect ratio
           </label>
         </div>
         <div class="form-control">
@@ -147,7 +148,7 @@ export default {
       options: {
         aspectRatio: '16:9',
         icon: false,
-        portraitMode: false
+        invertAspectRatio: false
       }
     }
   },
@@ -204,19 +205,15 @@ export default {
     snap() {
       const canvas = this.$refs.mainFrame;
 
-      console.log('SNAP');
-
       // Super candid and bad solution
       const snap = document.createElement('canvas');
       snap.width = this.selection.width; // TODO dynamic, see that with a print person
       snap.height = this.selection.height;
 
-      console.log(this.selection.width, this.selection.height);
-
       snap
         .getContext('2d')
         .drawImage(
-          this.$refs.mainFrame, // SNAP FROM THE IRIS INSTEAD
+          this.$refs.mainFrame, // SNAP FROM THE IRIS SOURCE INSTEAD
           this.selection.x,
           this.selection.y,
           this.selection.width,
@@ -226,7 +223,6 @@ export default {
           snap.width,
           snap.height
         );
-
 
       snap.toBlob((blob) => {
         FileSaver.saveAs(blob, 'iris-snap.jpg');
@@ -323,9 +319,12 @@ export default {
       const context = canvas.getContext('2d');
 
       const base = Math.round(Math.min(canvas.height, canvas.width) * SELECTION_SCALE); // Maximum width/height that should be used
-      const aspectRatio = this.options.aspectRatio;
+      let aspectRatio = this.options.aspectRatio.split(':');
 
-      const [aspectRatioWidth, aspectRatioHeight] = aspectRatio.split(':');
+      if (aspectRatio.length !== 2) return;
+      if (this.options.invertAspectRatio) aspectRatio = aspectRatio.reverse();
+
+      const [aspectRatioWidth, aspectRatioHeight] = aspectRatio;
 
       if (!aspectRatioWidth || !aspectRatioHeight) return;
 
