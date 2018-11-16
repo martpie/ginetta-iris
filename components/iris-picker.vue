@@ -74,9 +74,7 @@
             @focus="selectText"
           >
         </div>
-        <div class="about">
-          <small>"finished" in a rush by <a href="https://martpie.io">this guy</a></small>
-        </div>
+        <iris-about />
       </div>
     </div>
     <div
@@ -107,6 +105,8 @@ import * as d3 from 'd3';
 import d3zoom from 'd3-zoom';
 import FileSaver from 'file-saver';
 
+import IrisAbout from './iris-about';
+
 import { getCanvasMaxDimensions } from '../utils/canvas';
 
 const INITIAL_SCALE = 0.8; // TODO
@@ -114,18 +114,10 @@ const MAX_SCALE = 20;
 const MIN_SCALE = 0.25;
 const SELECTION_SCALE = 0.75;
 
-let isPointerDown = false;
-let animationFrame = 0;
-let initialCoordinates = {
-  x: null,
-  y: null
-};
-
-let iris;
-let irisCanvas;
-let icon;
-
 export default {
+  components: {
+    'iris-about': IrisAbout
+  },
   data() {
     return {
       loaded: false,
@@ -155,11 +147,12 @@ export default {
   mounted() {
     const _self = this;
 
-    iris = new Image();
-    icon = new Image();
+    this.iris = new Image();
+    this.icon = new Image();
 
     // Pre-render Iris in a canvas
-    irisCanvas = document.createElement('canvas');
+    const irisCanvas = document.createElement('canvas');
+    this.irisCanvas = irisCanvas;
 
     const canvas = this.$refs.mainFrame;
     const context = canvas.getContext('2d');
@@ -167,12 +160,12 @@ export default {
 
     window.addEventListener('resize', this.refresh, { passive: true });
 
-    iris.onload = () => {
+    this.iris.onload = () => {
       // Using a canvas to draw the iris in the main frame boosts perforamces in Chrome
-      const { width: irisCanvasWidth, height: irisCanvasHeight } = getCanvasMaxDimensions(iris.width, iris.height);
+      const { width: irisCanvasWidth, height: irisCanvasHeight } = getCanvasMaxDimensions(this.iris.width, this.iris.height);
       irisCanvas.width = irisCanvasWidth;
       irisCanvas.height = irisCanvasHeight;
-      irisCanvas.getContext('2d').drawImage(iris, 0, 0, irisCanvas.width, irisCanvas.width);
+      irisCanvas.getContext('2d').drawImage(this.iris, 0, 0, irisCanvas.width, irisCanvas.width);
 
       // Looks like reactivity is not instantaneous
       setTimeout(() => {
@@ -185,12 +178,12 @@ export default {
       }, 0);
     };
 
-    iris.onerror = (e) => {
+    this.iris.onerror = (e) => {
       console.error('Failed loading the iris');
     };
 
-    icon.src = 'icon.svg';
-    iris.src = 'iris.png';
+    this.icon.src = 'icon.svg';
+    this.iris.src = 'iris.png';
   },
   methods: {
     refreshFrameDimensions() {
@@ -272,15 +265,15 @@ export default {
         const canvas = this.$refs.mainFrame;
         const context = canvas.getContext('2d');
 
-        const destWidth = icon.width;
-        const destHeight = icon.height;
+        const destWidth = this.icon.width;
+        const destHeight = this.icon.height;
         const x = Math.round((canvas.width - destWidth) / 2);
         const y = Math.round((canvas.height - destHeight) / 2);
 
         context.save();
         context.globalAlpha = 0.4;
         context.drawImage(
-          icon,
+          this.icon,
           x,
           y,
           destWidth,
@@ -292,6 +285,8 @@ export default {
     drawIris() {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
+
+      const { irisCanvas } = this;
 
       const base = Math.round(Math.min(canvas.height, canvas.width) * INITIAL_SCALE);
 
@@ -311,7 +306,7 @@ export default {
 
       // Let's rescale the big image to make it fit our canvas
       context.drawImage(
-        irisCanvas,
+        this.irisCanvas,
         (canvas.width - destinationWidth) / 2,
         (canvas.height - destinationHeight) / 2,
         destinationWidth,
@@ -383,7 +378,7 @@ export default {
 
       return aspectRatio;
     }
-  },
+  }
 }
 </script>
 
@@ -472,13 +467,6 @@ export default {
 
 .iris__toolbar__about {
   margin-top: auto;
-
-  .about small {
-    display: block;
-    font-size: .750rem;
-    color: #bbb;
-    text-align: center;
-  }
 }
 
 #snap {
