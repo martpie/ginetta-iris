@@ -109,9 +109,9 @@ import IrisAbout from './iris-about';
 
 import { getCanvasMaxDimensions } from '../utils/canvas';
 
-const INITIAL_SCALE = 0.8; // TODO
+const INITIAL_SCALE = 0.8;
 const MAX_SCALE = 20;
-const MIN_SCALE = 0.25;
+const MIN_SCALE = 0.5;
 const SELECTION_SCALE = 0.75;
 
 export default {
@@ -151,8 +151,8 @@ export default {
     this.icon = new Image();
 
     // Pre-render Iris in a canvas
-    const irisCanvas = document.createElement('canvas');
-    this.irisCanvas = irisCanvas;
+    const irisCache = document.createElement('canvas');
+    this.irisCache = irisCache;
 
     const canvas = this.$refs.mainFrame;
     const context = canvas.getContext('2d');
@@ -162,10 +162,10 @@ export default {
 
     this.iris.onload = () => {
       // Using a canvas to draw the iris in the main frame boosts perforamces in Chrome
-      const { width: irisCanvasWidth, height: irisCanvasHeight } = getCanvasMaxDimensions(this.iris.width, this.iris.height);
-      irisCanvas.width = irisCanvasWidth;
-      irisCanvas.height = irisCanvasHeight;
-      irisCanvas.getContext('2d').drawImage(this.iris, 0, 0, irisCanvas.width, irisCanvas.width);
+      const { width, height } = getCanvasMaxDimensions(this.iris.width, this.iris.height);
+      irisCache.width = width;
+      irisCache.height = height;
+      irisCache.getContext('2d').drawImage(this.iris, 0, 0, irisCache.width, irisCache.width);
 
       // Looks like reactivity is not instantaneous
       setTimeout(() => {
@@ -286,27 +286,27 @@ export default {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
-      const { irisCanvas } = this;
+      const { irisCache } = this;
 
       const base = Math.round(Math.min(canvas.height, canvas.width) * INITIAL_SCALE);
 
-      let destinationWidth = irisCanvas.width;
-      let destinationHeight = irisCanvas.height;
+      let destinationWidth = irisCache.width;
+      let destinationHeight = irisCache.height;
 
       // We want to smart-draw the image into the canvas. It means we have to
       // check the canvas aspect ratio to see if the destination rectangle
       // coordinate will be in proportion of the width or the height.
-      if (irisCanvas.width > irisCanvas.height) {
+      if (irisCache.width > irisCache.height) {
         destinationWidth = base;
-        destinationHeight = Math.round(irisCanvas.height * base / irisCanvas.width);
+        destinationHeight = Math.round(irisCache.height * base / irisCache.width);
       } else {
-        destinationWidth = Math.round(irisCanvas.width * base / irisCanvas.height);
+        destinationWidth = Math.round(irisCache.width * base / irisCache.height);
         destinationHeight = base;
       }
 
       // Let's rescale the big image to make it fit our canvas
       context.drawImage(
-        this.irisCanvas,
+        this.irisCache,
         (canvas.width - destinationWidth) / 2,
         (canvas.height - destinationHeight) / 2,
         destinationWidth,
