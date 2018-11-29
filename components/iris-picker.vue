@@ -183,7 +183,7 @@ export default {
     };
 
     this.icon.src = 'icon.svg';
-    this.iris.src = 'iris.png';
+    this.iris.src = 'iris.svg';
   },
   methods: {
     refreshFrameDimensions() {
