@@ -102,7 +102,7 @@
 
 <script>
 import * as d3 from 'd3';
-import d3zoom from 'd3-zoom';
+import 'd3-zoom';
 import FileSaver from 'file-saver';
 
 import IrisAbout from './iris-about';
@@ -118,7 +118,7 @@ export default {
   components: {
     'iris-about': IrisAbout
   },
-  data() {
+  data () {
     return {
       loaded: false,
       dragging: false,
@@ -142,11 +142,9 @@ export default {
         icon: false,
         invertAspectRatio: false
       }
-    }
+    };
   },
-  mounted() {
-    const _self = this;
-
+  mounted () {
     this.iris = new Image();
     this.icon = new Image();
 
@@ -155,7 +153,6 @@ export default {
     this.irisCache = irisCache;
 
     const canvas = this.$refs.mainFrame;
-    const context = canvas.getContext('2d');
     const d3canvas = d3.select(canvas);
 
     window.addEventListener('resize', this.refresh, { passive: true });
@@ -171,7 +168,7 @@ export default {
       setTimeout(() => {
         d3canvas.call(d3.zoom()
           .scaleExtent([MIN_SCALE, MAX_SCALE])
-          .on("zoom", this.zoomed));
+          .on('zoom', this.zoomed));
 
         this.refresh();
         this.loaded = true;
@@ -186,17 +183,16 @@ export default {
     this.iris.src = 'iris.svg';
   },
   methods: {
-    refreshFrameDimensions() {
+    refreshFrameDimensions () {
       const { offsetWidth, offsetHeight } = this.$refs.mainFrameContainer;
 
       this.frame.width = offsetWidth;
       this.frame.height = offsetHeight;
     },
-    selectText(e) {
+    selectText (e) {
       e.currentTarget.select();
     },
-    snap() {
-      const canvas = this.$refs.mainFrame;
+    snap () {
       const [aspectRatioWidth, aspectRatioHeight] = this.getAspectRatio();
 
       // Super candid and bad solution
@@ -225,14 +221,14 @@ export default {
     /**
      * Canvas drawing functions
      */
-    zoomed() {
+    zoomed () {
       this.frame.scale = d3.event.transform.k;
       this.frame.translate.x = d3.event.transform.x;
       this.frame.translate.y = d3.event.transform.y;
 
       this.refresh();
     },
-    refresh() {
+    refresh () {
       const context = this.$refs.mainFrame.getContext('2d');
 
       this.refreshFrameDimensions();
@@ -250,7 +246,7 @@ export default {
         this.drawIcon();
       });
     },
-    drawBackground() {
+    drawBackground () {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
@@ -260,7 +256,7 @@ export default {
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.restore();
     },
-    drawIcon() {
+    drawIcon () {
       if (this.options.icon) {
         const canvas = this.$refs.mainFrame;
         const context = canvas.getContext('2d');
@@ -282,7 +278,7 @@ export default {
         context.restore();
       }
     },
-    drawIris() {
+    drawIris () {
       const canvas = this.$refs.mainFrame;
       const context = canvas.getContext('2d');
 
@@ -313,7 +309,7 @@ export default {
         destinationHeight
       );
     },
-    drawSelection() {
+    drawSelection () {
       // A few things could be cached here, as long as the aspectRatio doesn't
       // change, we should just use this.selection
       const canvas = this.$refs.mainFrame;
@@ -334,7 +330,7 @@ export default {
         selectionWidth = Math.round(base);
         selectionHeight = Math.round(base * (aspectRatioHeight / aspectRatioWidth));
       } else {
-        selectionWidth = Math.round(base * (aspectRatioWidth / aspectRatioHeight))
+        selectionWidth = Math.round(base * (aspectRatioWidth / aspectRatioHeight));
         selectionHeight = Math.round(base);
       }
 
@@ -354,7 +350,7 @@ export default {
       context.strokeRect(x, y, selectionWidth, selectionHeight);
 
       // Build the rectangle to focus on the center of the image
-      context.fillStyle = 'rgba(0, 0, 0, .5)'
+      context.fillStyle = 'rgba(0, 0, 0, .5)';
       // context.fillStyle = 'rgba(255, 255, 255, .3)'
       context.fillRect(0, 0, x + selectionWidth, y);
       context.fillRect(0, y, x, y + selectionHeight);
@@ -366,7 +362,7 @@ export default {
     /**
      * Some helpers
      */
-    getAspectRatio() {
+    getAspectRatio () {
       let aspectRatio = this.options.aspectRatio.split(':');
 
       if (aspectRatio.length !== 2) return [null, null];
@@ -374,12 +370,12 @@ export default {
 
       aspectRatio = aspectRatio.map(a => Number(a));
 
-      if (aspectRatio[0] === NaN || aspectRatio[1] === NaN) return [null, null];
+      if (isNaN(aspectRatio[0]) || isNaN(aspectRatio[1])) return [null, null];
 
       return aspectRatio;
     }
   }
-}
+};
 </script>
 
 <style lang="scss">
